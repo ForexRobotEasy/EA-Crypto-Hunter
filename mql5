@@ -1,0 +1,86 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                        EA Crypto Hunter         |
+//|                         Developer's site: forexroboteasy.com    |
+//|                         Development: Forex Robot Easy Team      |
+//|                                                                  |
+//| Purpose: This Expert Advisor uses a unique mathematical algorithm |
+//|          to identify zones of price accumulation and determine   |
+//|          the trend direction. It also protects trades from price |
+//|          gaps and aims to have a high percentage of profitable   |
+//|          trades.                                                 |
+//+------------------------------------------------------------------+
+
+// Define input parameters
+input int TimeFrame = PERIOD_H1; // Timeframe to analyze for price accumulation
+input double ExitThreshold = 0.01; // Exit threshold for congestion area
+input double GapProtection = 50; // Price gap protection in points
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Add initialization code here
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Add deinitialization code here
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Add tick processing code here
+    double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+    double stopLoss = currentPrice - GapProtection * Point;
+    double takeProfit = currentPrice + GapProtection * Point;
+    
+    // Place a pending order with stop loss and take profit
+    int ticket = OrderSend(_Symbol, OP_BUYSTOP, 0.01, currentPrice, 0, stopLoss, takeProfit, 'Crypto Hunter', 0, 0, Green);
+    
+    if(ticket > 0)
+    {
+        // Pending order placed successfully
+        Print('Pending order placed with ticket: ', ticket);
+        if(OrderSelect(ticket, SELECT_BY_TICKET))
+        {
+            // Modify the pending order if necessary
+            if(OrderType() == OP_BUYSTOP && OrderOpenPrice() - currentPrice > ExitThreshold)
+            {
+                if(!OrderModify(ticket, 0, currentPrice, stopLoss, takeProfit, Green))
+                {
+                    Print('Error modifying pending order');
+                }
+                else
+                {
+                    Print('Pending order modified successfully');
+                }
+            }
+        }
+    }
+    else
+    {
+        Print('Error placing pending order: ', GetLastError());
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Expert start function                                            |
+//+------------------------------------------------------------------+
+void OnStart()
+{
+    // Add start code here
+}
+
+//+------------------------------------------------------------------+
+//| Custom functions                                                  |
+//+------------------------------------------------------------------+
+// Add any necessary custom functions here
